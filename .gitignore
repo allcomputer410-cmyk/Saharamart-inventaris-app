@@ -27,9 +27,31 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env
+sync-agent/.env
+sync-agent/sync_agent.log
+sync-agent/KIRIM-KE-KASIR/.env
+ipos-sync-kit/.env
 
 # vercel
 .vercel
+
+# dokumen & file planning (tidak perlu di-deploy)
+CLAUDE_CODE_PROMPT.md
+blueprint_extracted.txt
+blueprint_workbook_v7_unified.docx
+~$*.docx
+
+# claude code
+.claude/
+
+# python cache
+__pycache__/
+*.pyc
+*.pyo
+sync-agent/dist/
+sync-agent/build/
+sync-agent/*.spec
 
 # typescript
 *.tsbuildinfo

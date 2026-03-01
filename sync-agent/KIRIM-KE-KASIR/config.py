@@ -1,0 +1,27 @@
+"""
+Konfigurasi Sync Agent iPOS → Supabase
+Salin file ini sebagai .env di folder sync-agent, lalu isi nilainya.
+"""
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Supabase
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
+
+# iPOS PostgreSQL 8.4 connection per store
+# Format: IPOS_{KODEKANTOR}_HOST, IPOS_{KODEKANTOR}_PORT, etc.
+# Defaults for single-store setup:
+IPOS_DB_HOST = os.getenv("IPOS_DB_HOST", "localhost")
+IPOS_DB_PORT = int(os.getenv("IPOS_DB_PORT", "5444"))   # iPOS InspirasiBiz pakai 5444
+IPOS_DB_NAME = os.getenv("IPOS_DB_NAME", "i4_SAHARAMART")
+IPOS_DB_USER = os.getenv("IPOS_DB_USER", "postgres")
+IPOS_DB_PASS = os.getenv("IPOS_DB_PASS", "")
+
+# Sync interval in minutes
+SYNC_INTERVAL = int(os.getenv("SYNC_INTERVAL", "15"))
+
+# Log level
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")

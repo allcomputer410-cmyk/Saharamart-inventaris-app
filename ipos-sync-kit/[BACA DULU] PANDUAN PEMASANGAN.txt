@@ -1,0 +1,144 @@
+╔══════════════════════════════════════════════════════════════════╗
+║         PANDUAN PEMASANGAN SYNC AGENT iPOS → SUPABASE           ║
+║                   (Baca sebelum memulai!)                        ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Sync Agent adalah program kecil yang berjalan di background di PC kasir.
+Tugasnya: mengambil data dari iPOS lalu mengirim ke server cloud (Supabase)
+supaya bisa dilihat di aplikasi inventaris dari mana saja.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SYARAT SEBELUM MULAI
+─────────────────────
+  [√] iPOS sudah terinstall dan pernah dijalankan di PC ini
+  [√] PC kasir terhubung ke internet
+  [√] Tahu nama database iPOS di PC ini (biasanya i4_NAMATOKO)
+      Kalau tidak tahu, lihat di bagian "CARA CEK NAMA DATABASE"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4 LANGKAH PEMASANGAN
+─────────────────────
+
+LANGKAH 1 — INSTALL (double-click: 1_INSTALL.bat)
+  • Akan install library Python yang dibutuhkan
+  • Akan membuat file .env (konfigurasi)
+  • File .env akan terbuka otomatis di Notepad
+
+  Yang perlu diubah di file .env:
+  ┌─────────────────────────────────────────────┐
+  │ IPOS_DB_NAME=i4_NAMATOKO                    │
+  │               ^^^^^^^^^^^                   │
+  │               Ganti dengan nama database    │
+  │               iPOS di PC ini               │
+  │                                             │
+  │ Contoh: IPOS_DB_NAME=i4_SAHARAMART          │
+  └─────────────────────────────────────────────┘
+
+  Sisanya (Supabase URL, port, user, password) JANGAN diubah,
+  sudah otomatis terisi dengan benar.
+
+  Setelah edit .env, simpan (Ctrl+S) lalu tutup Notepad.
+
+─────────────────────────────────────────────────────────────────
+
+LANGKAH 2 — TEST KONEKSI (double-click: 2_TEST_KONEKSI.bat)
+  • Akan cek apakah bisa terhubung ke database iPOS
+  • Akan menampilkan jumlah produk yang ditemukan
+  • Akan cek koneksi ke internet/Supabase
+
+  Jika berhasil, akan muncul:
+    [OK] tbl_item
+    [OK] tbl_itemstok
+    [OK] ...dll
+    BERHASIL terhubung ke iPOS!
+
+  Jika gagal, ikuti petunjuk yang muncul di layar.
+
+─────────────────────────────────────────────────────────────────
+
+LANGKAH 3 — SYNC PERTAMA (double-click: 3_SYNC_SEKARANG.bat)
+  • Akan mengirim SEMUA data iPOS ke server cloud
+  • Produk, stok, penjualan, pembelian — semuanya
+  • Estimasi waktu: 3-10 menit
+
+  Setelah selesai, data sudah bisa dilihat di aplikasi inventaris.
+
+─────────────────────────────────────────────────────────────────
+
+LANGKAH 4 — AUTO-SYNC (klik kanan: 4_AUTOSTART_SETUP.bat → "Run as administrator")
+  • Daftarkan sync agent agar berjalan otomatis saat PC menyala
+  • Sync akan berjalan di background setiap 15 menit
+  • Tidak ada jendela yang muncul
+
+  !! File ini HARUS dijalankan sebagai Administrator !!
+  Caranya: klik KANAN → pilih "Run as administrator"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CARA CEK NAMA DATABASE iPOS DI PC INI
+────────────────────────────────────────
+  Cara 1 (paling mudah):
+    1. Buka 2_TEST_KONEKSI.bat
+    2. Jika database tidak ditemukan, script akan otomatis
+       menampilkan daftar database iPOS yang ada di PC ini
+
+  Cara 2 (manual):
+    1. Buka File Explorer
+    2. Cari folder instalasi iPOS
+       (biasanya di C:\Program Files\iPOS4\ atau C:\iPOS4\)
+    3. Buka file konfigurasi iPOS (config.ini atau setting.ini)
+    4. Cari baris yang ada "database" atau "dbname"
+
+  Cara 3 (pgAdmin):
+    1. Buka pgAdmin (jika terinstall)
+    2. Konek ke localhost:5444
+    3. Lihat daftar database yang namanya diawali "i4_"
+
+  Format nama database iPOS selalu: i4_NAMATOKO
+  Contoh: i4_SAHARAMART, i4_TOKOBAHAGIA, i4_MINIBAZAAR
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TAMBAHKAN TOKO BARU KE APLIKASI
+────────────────────────────────
+  Sebelum Langkah 3, pastikan toko sudah didaftarkan
+  di database Supabase oleh admin aplikasi.
+
+  Yang perlu diberitahu ke admin:
+    - Nama toko
+    - Kode kantor iPOS (lihat di tbl_kantor di iPOS)
+    - Nama database iPOS (i4_NAMATOKO)
+
+  Setelah toko didaftarkan di Supabase, baru jalankan sync.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DAFTAR FILE DALAM FOLDER INI
+──────────────────────────────
+  [BACA DULU] PANDUAN PEMASANGAN.txt   <- File ini
+  1_INSTALL.bat                         <- Langkah 1: Install
+  2_TEST_KONEKSI.bat                    <- Langkah 2: Test koneksi
+  3_SYNC_SEKARANG.bat                   <- Langkah 3: Sync data
+  4_AUTOSTART_SETUP.bat                 <- Langkah 4: Auto-start
+  .env.template                         <- Template konfigurasi
+  .env                                  <- Konfigurasi aktif (dibuat otomatis)
+  sync_agent.py                         <- Program utama sync
+  config.py                             <- Modul konfigurasi
+  requirements.txt                      <- Daftar library Python
+  jalankan_semua.py                     <- Script sync penuh
+  test_koneksi.py                       <- Script test koneksi
+  verify.py                             <- Script verifikasi data
+  run_silent.vbs                        <- Background runner
+  sync_agent.log                        <- Log aktivitas sync
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+JIKA ADA MASALAH
+─────────────────
+  1. Buka file sync_agent.log untuk melihat pesan error
+  2. Jalankan 2_TEST_KONEKSI.bat dan baca pesan yang muncul
+  3. Hubungi admin aplikasi inventaris
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
