@@ -29,11 +29,13 @@ interface DailySalesRow {
 
 interface SaleItemRow {
   id: string;
+  store_product_id: string;
   qty_sold: number;
   revenue: number;
   hpp_total: number;
   profit: number;
   avg_sell_price: number;
+  current_qty: number | null;
   store_product?: { name: string; barcode: string; unit: string }
     | { name: string; barcode: string; unit: string }[];
 }
@@ -110,7 +112,8 @@ export default function PenjualanPage() {
     setExpandedDay(dayId);
     setLoadingItems(true);
 
-    const { data, error } = await supabase
+    // Query 1: item penjualan + nama produk
+    const { data: itemsData, error } = await supabase
       .from('daily_sale_items')
       .select(`
         *,
@@ -121,9 +124,33 @@ export default function PenjualanPage() {
 
     if (error) {
       console.error('Error fetching sale items:', error);
-    } else {
-      setDayItems(data || []);
+      setLoadingItems(false);
+      return;
     }
+
+    const items: SaleItemRow[] = (itemsData || []).map((i) => ({ ...i, current_qty: null }));
+
+    // Query 2: stok terkini per produk
+    const productIds = items.map((i) => i.store_product_id).filter(Boolean);
+    if (productIds.length > 0) {
+      const { data: stockData } = await supabase
+        .from('stock')
+        .select('store_product_id, current_qty')
+        .eq('store_id', storeId)
+        .in('store_product_id', productIds);
+
+      if (stockData) {
+        const stockMap: Record<string, number> = {};
+        stockData.forEach((s) => { stockMap[s.store_product_id] = s.current_qty; });
+        items.forEach((item) => {
+          if (item.store_product_id in stockMap) {
+            item.current_qty = stockMap[item.store_product_id];
+          }
+        });
+      }
+    }
+
+    setDayItems(items);
     setLoadingItems(false);
   }
 
@@ -280,7 +307,9 @@ export default function PenjualanPage() {
                               <th className="px-3 py-2">#</th>
                               <th className="px-3 py-2">Produk</th>
                               <th className="px-3 py-2">Barcode</th>
+                              <th className="px-3 py-2 text-right">Stok Awal</th>
                               <th className="px-3 py-2 text-right">Qty</th>
+                              <th className="px-3 py-2 text-right">Stok Akhir</th>
                               <th className="px-3 py-2 text-right">Revenue</th>
                               <th className="px-3 py-2 text-right">HPP</th>
                               <th className="px-3 py-2 text-right">Profit</th>
@@ -291,6 +320,13 @@ export default function PenjualanPage() {
                               const sp = Array.isArray(item.store_product)
                                 ? item.store_product[0]
                                 : item.store_product;
+                              const stokAkhir = item.current_qty;
+                              const stokAwal = stokAkhir !== null ? stokAkhir + item.qty_sold : null;
+                              const stokAkhirColor =
+                                stokAkhir === null ? 'text-gray-400' :
+                                stokAkhir === 0 ? 'text-red-600 font-bold' :
+                                stokAkhir < 5 ? 'text-orange-500 font-semibold' :
+                                'text-gray-700';
                               return (
                                 <tr key={item.id} className="hover:bg-gray-50">
                                   <td className="table-cell text-gray-400 text-sm">{idx + 1}</td>
@@ -300,8 +336,14 @@ export default function PenjualanPage() {
                                   <td className="table-cell font-mono text-xs text-gray-500">
                                     {sp?.barcode || '-'}
                                   </td>
+                                  <td className="table-cell text-right text-sm text-gray-700">
+                                    {stokAwal !== null ? stokAwal : '-'}
+                                  </td>
                                   <td className="table-cell text-right">
                                     {item.qty_sold} {sp?.unit || ''}
+                                  </td>
+                                  <td className={`table-cell text-right text-sm ${stokAkhirColor}`}>
+                                    {stokAkhir !== null ? stokAkhir : '-'}
                                   </td>
                                   <td className="table-cell text-right font-medium">
                                     {formatRupiah(item.revenue)}
@@ -317,6 +359,18 @@ export default function PenjualanPage() {
                             })}
                           </tbody>
                         </table>
+                        {(() => {
+                          const expandedDayData = sales.find((d) => d.id === expandedDay);
+                          const today = new Date().toISOString().slice(0, 10);
+                          if (expandedDayData && expandedDayData.sale_date !== today) {
+                            return (
+                              <p className="px-4 py-2 text-xs text-amber-600 bg-amber-50 border-t border-amber-100">
+                                ⚠ Data stok awal/akhir adalah perkiraan untuk tanggal lampau (berdasarkan stok terkini)
+                              </p>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
                     )}
                   </div>
